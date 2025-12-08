@@ -1,11 +1,15 @@
-from typing import Optional
+from . import models
+from .database import SessionDep, create_db_and_tables
+from .models import Post
+
 from fastapi import FastAPI, Response, status, HTTPException
-from fastapi.params import Body
 from pydantic import BaseModel
-from random import randrange
 import psycopg
 from psycopg.rows import dict_row
 import time
+
+
+create_db_and_tables()
 
 app = FastAPI()
 
@@ -15,11 +19,6 @@ class Post(BaseModel):
     content: str
     published: bool = True
 
-
-my_posts = [
-    {"id": 1, "title": "title of post", "content": "content of post"},
-    {"id": 2, "title": "favorite food", "content": "braised pork"},
-]
 
 while True:
     try:
@@ -35,21 +34,14 @@ while True:
         time.sleep(3)
 
 
-def find_post(id):
-    for post in my_posts:
-        if post["id"] == id:
-            return post
-
-
-def find_post_index(id):
-    for i, post in enumerate(my_posts):
-        if post["id"] == id:
-            return i
-
-
 @app.get("/")
 def read_root():
     return {"Hello": "Mate"}
+
+
+@app.get("/sqlmodel")
+def test_posts(session: SessionDep):
+    return {"status": "success"}
 
 
 @app.get("/posts")
