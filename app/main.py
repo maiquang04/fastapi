@@ -1,9 +1,8 @@
-from . import models
+from typing import List
+from . import models, schemas
 from .database import SessionDep, create_db_and_tables
-from .models import Post
 
-from fastapi import FastAPI, Response, status, HTTPException
-from pydantic import BaseModel
+from fastapi import FastAPI, status, HTTPException
 import psycopg
 from psycopg.rows import dict_row
 import time
@@ -34,13 +33,13 @@ def read_root():
     return {"Hello": "Mate"}
 
 
-@app.get("/posts")
+@app.get("/posts", response_model=List[schemas.PostResponse])
 def get_posts(session: SessionDep):
     posts = session.exec(select(models.Post)).all()
-    return {"data": posts}
+    return posts
 
 
-@app.get("/posts/{id}")
+@app.get("/posts/{id}", response_model=schemas.PostResponse)
 def get_post(id: int, session: SessionDep):
     # cursor.execute("""SELECT * FROM posts WHERE id = %s""", (str(id),))
     # post = cursor.fetchone()
@@ -51,11 +50,15 @@ def get_post(id: int, session: SessionDep):
             detail=f"post with id: {id} not found",
         )
         # response.status_code = status.HTTP_404_NOT_FOUND
-    return {"post_detail": post}
+    return post
 
 
-@app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_post(post: Post, session: SessionDep):
+@app.post(
+    "/posts",
+    status_code=status.HTTP_201_CREATED,
+    response_model=schemas.PostResponse,
+)
+def create_post(post: schemas.PostCreate, session: SessionDep):
     # cursor.execute(
     #     """INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING *""",
     #     (post.title, post.content, post.published),
@@ -66,7 +69,7 @@ def create_post(post: Post, session: SessionDep):
     session.add(new_post)
     session.commit()
     session.refresh(new_post)
-    return {"data": new_post}
+    return new_post
 
 
 @app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -86,8 +89,8 @@ def delete_post(id: int, session: SessionDep):
     session.commit()
 
 
-@app.put("/posts/{id}")
-def update_post(id: int, post: Post, session: SessionDep):
+@app.put("/posts/{id}", response_model=schemas.PostResponse)
+def update_post(id: int, post: schemas.PostCreate, session: SessionDep):
     # cursor.execute(
     #     """UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING *""",
     #     (post.title, post.content, post.published, str(id)),
@@ -109,4 +112,4 @@ def update_post(id: int, post: Post, session: SessionDep):
     session.commit()
     session.refresh(db_post)
 
-    return {"data": db_post}
+    return db_post
