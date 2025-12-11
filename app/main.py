@@ -1,13 +1,13 @@
 from typing import List
-from . import models, schemas
-from .database import SessionDep, create_db_and_tables
-
 from fastapi import FastAPI, status, HTTPException
 import psycopg
 from psycopg.rows import dict_row
 import time
 from sqlmodel import select
 
+from . import models, schemas
+from .database import SessionDep, create_db_and_tables
+from . import utils
 
 create_db_and_tables()
 
@@ -113,3 +113,16 @@ def update_post(id: int, post: schemas.PostCreate, session: SessionDep):
     session.refresh(db_post)
 
     return db_post
+
+
+@app.post(
+    "/users", status_code=status.HTTP_201_CREATED, response_model=schemas.UserResponse
+)
+def create_user(user: schemas.UserCreate, session: SessionDep):
+    hashed_password = utils.get_password_hash(user.password)
+    user.password = hashed_password
+    new_user = models.User(**user.model_dump())
+    session.add(new_user)
+    session.commit()
+    session.refresh(new_user)
+    return new_user

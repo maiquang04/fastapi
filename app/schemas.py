@@ -1,4 +1,5 @@
 from sqlmodel import SQLModel
+from pydantic import EmailStr
 from datetime import datetime
 
 
@@ -14,4 +15,15 @@ class PostCreate(PostBase):
 
 class PostResponse(PostBase):
     id: int
+    created_at: datetime
+
+
+class UserCreate(SQLModel):
+    email: EmailStr
+    password: str
+
+
+class UserResponse(SQLModel):
+    id: int
+    email: EmailStr
     created_at: datetime
