@@ -9,7 +9,7 @@ from app.database import SessionDep
 router = APIRouter(tags=["Authentication"])
 
 
-@router.post("/login")
+@router.post("/login", response_model=schemas.Token)
 def login(
     user_credentials: Annotated[OAuth2PasswordRequestForm, Depends()],
     session: SessionDep,

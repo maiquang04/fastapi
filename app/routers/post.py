@@ -9,13 +9,19 @@ router = APIRouter(prefix="/posts")
 
 
 @router.get("/", response_model=List[schemas.PostResponse])
-def get_posts(session: SessionDep):
-    posts = session.exec(select(models.Post)).all()
+def get_posts(
+    session: SessionDep, user: models.User = Depends(oauth2.get_current_user)
+):
+    posts = session.exec(
+        select(models.Post).filter(models.Post.user_id == user.id)
+    ).all()
     return posts
 
 
 @router.get("/{id}", response_model=schemas.PostResponse)
-def get_post(id: int, session: SessionDep):
+def get_post(
+    id: int, session: SessionDep, user: models.User = Depends(oauth2.get_current_user)
+):
     # cursor.execute("""SELECT * FROM posts WHERE id = %s""", (str(id),))
     # post = cursor.fetchone()
     post = session.get(models.Post, id)
@@ -36,7 +42,7 @@ def get_post(id: int, session: SessionDep):
 def create_post(
     post: schemas.PostCreate,
     session: SessionDep,
-    user_id: int = Depends(oauth2.get_current_user),
+    user: models.User = Depends(oauth2.get_current_user),
 ):
     # cursor.execute(
     #     """INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING *""",
@@ -44,7 +50,7 @@ def create_post(
     # )
     # new_post = cursor.fetchone()
     # conn.commit()
-    new_post = models.Post(**post.model_dump())
+    new_post = models.Post(user_id=user.id, **post.model_dump())
     session.add(new_post)
     session.commit()
     session.refresh(new_post)
@@ -52,7 +58,9 @@ def create_post(
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(id: int, session: SessionDep):
+def delete_post(
+    id: int, session: SessionDep, user: models.User = Depends(oauth2.get_current_user)
+):
     # cursor.execute("""DELETE FROM posts WHERE id = %s RETURNING *""", (str(id),))
     # deleted_post = cursor.fetchone()
     # conn.commit()
@@ -64,12 +72,23 @@ def delete_post(id: int, session: SessionDep):
             detail=f"post with id: {id} does not exist",
         )
 
+    if post.user_id != user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to perform requested action",
+        )
+
     session.delete(post)
     session.commit()
 
 
 @router.put("/{id}", response_model=schemas.PostResponse)
-def update_post(id: int, post: schemas.PostCreate, session: SessionDep):
+def update_post(
+    id: int,
+    post: schemas.PostCreate,
+    session: SessionDep,
+    user: models.User = Depends(oauth2.get_current_user),
+):
     # cursor.execute(
     #     """UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING *""",
     #     (post.title, post.content, post.published, str(id)),
@@ -82,6 +101,12 @@ def update_post(id: int, post: schemas.PostCreate, session: SessionDep):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"post with id: {id} does not exist",
+        )
+
+    if db_post.user_id != user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to perform requested action",
         )
 
     for key, value in post.model_dump(exclude_unset=True).items():

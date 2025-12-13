@@ -16,6 +16,7 @@ class PostCreate(PostBase):
 class PostResponse(PostBase):
     id: int
     created_at: datetime
+    user_id: int
 
 
 class UserCreate(SQLModel):
@@ -35,4 +36,4 @@ class Token(SQLModel):
 
 
 class TokenData(SQLModel):
-    id: str | None = None
+    id: int | None = None
