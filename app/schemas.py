@@ -27,3 +27,12 @@ class UserResponse(SQLModel):
     id: int
     email: EmailStr
     created_at: datetime
+
+
+class Token(SQLModel):
+    token: str
+    token_type: str
+
+
+class TokenData(SQLModel):
+    id: str | None = None

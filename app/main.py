@@ -4,7 +4,7 @@ from psycopg.rows import dict_row
 import time
 
 from app.database import create_db_and_tables
-from app.routers import post, user
+from app.routers import post, user, auth
 
 create_db_and_tables()
 
@@ -32,3 +32,4 @@ def read_root():
 
 app.include_router(post.router)
 app.include_router(user.router)
+app.include_router(auth.router)

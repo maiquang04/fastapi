@@ -1,8 +1,8 @@
 from typing import List
 
-from fastapi import HTTPException, status, APIRouter
+from fastapi import HTTPException, status, APIRouter, Depends
 from sqlmodel import select
-from app import schemas, models
+from app import schemas, models, oauth2
 from app.database import SessionDep
 
 router = APIRouter(prefix="/posts")
@@ -33,7 +33,11 @@ def get_post(id: int, session: SessionDep):
     status_code=status.HTTP_201_CREATED,
     response_model=schemas.PostResponse,
 )
-def create_post(post: schemas.PostCreate, session: SessionDep):
+def create_post(
+    post: schemas.PostCreate,
+    session: SessionDep,
+    user_id: int = Depends(oauth2.get_current_user),
+):
     # cursor.execute(
     #     """INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING *""",
     #     (post.title, post.content, post.published),
