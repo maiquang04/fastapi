@@ -10,10 +10,18 @@ router = APIRouter(prefix="/posts")
 
 @router.get("/", response_model=List[schemas.PostResponse])
 def get_posts(
-    session: SessionDep, user: models.User = Depends(oauth2.get_current_user)
+    session: SessionDep,
+    user: models.User = Depends(oauth2.get_current_user),
+    limit: int = 10,
+    skip: int = 0,
+    search: str | None = "",
 ):
     posts = session.exec(
-        select(models.Post).filter(models.Post.user_id == user.id)
+        select(models.Post)
+        .filter(models.Post.user_id == user.id)
+        .limit(limit=limit)
+        .offset(skip)
+        .where(models.Post.title.contains(search))
     ).all()
     return posts
 

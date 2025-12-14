@@ -16,7 +16,7 @@ class PostCreate(PostBase):
 class PostResponse(PostBase):
     id: int
     created_at: datetime
-    user_id: int
+    user: "UserResponse"
 
 
 class UserCreate(SQLModel):
