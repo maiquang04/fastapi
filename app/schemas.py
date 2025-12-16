@@ -1,6 +1,7 @@
 from sqlmodel import SQLModel
 from pydantic import EmailStr
 from datetime import datetime
+from typing import Literal
 
 
 class PostBase(SQLModel):
@@ -17,6 +18,11 @@ class PostResponse(PostBase):
     id: int
     created_at: datetime
     user: "UserResponse"
+
+
+class PostWithVotesResponse(SQLModel):
+    Post: PostResponse
+    votes: int
 
 
 class UserCreate(SQLModel):
@@ -37,3 +43,8 @@ class Token(SQLModel):
 
 class TokenData(SQLModel):
     id: int | None = None
+
+
+class VoteCreate(SQLModel):
+    post_id: int
+    dir: Literal[0, 1]

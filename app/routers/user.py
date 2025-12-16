@@ -3,7 +3,7 @@ from sqlmodel import select
 from app import schemas, utils, models
 from app.database import SessionDep
 
-router = APIRouter(prefix="/users")
+router = APIRouter(prefix="/users", tags=["User"])
 
 
 @router.post(

@@ -1,14 +1,14 @@
 from typing import List
 
 from fastapi import HTTPException, status, APIRouter, Depends
-from sqlmodel import select
+from sqlmodel import select, func
 from app import schemas, models, oauth2
 from app.database import SessionDep
 
-router = APIRouter(prefix="/posts")
+router = APIRouter(prefix="/posts", tags=["Post"])
 
 
-@router.get("/", response_model=List[schemas.PostResponse])
+@router.get("/", response_model=List[schemas.PostWithVotesResponse])
 def get_posts(
     session: SessionDep,
     user: models.User = Depends(oauth2.get_current_user),
@@ -16,30 +16,42 @@ def get_posts(
     skip: int = 0,
     search: str | None = "",
 ):
-    posts = session.exec(
-        select(models.Post)
-        .filter(models.Post.user_id == user.id)
-        .limit(limit=limit)
-        .offset(skip)
+    stmt = (
+        select(models.Post, func.count(models.Vote.user_id).label("votes"))
+        .join(models.Vote, models.Vote.post_id == models.Post.id, isouter=True)
+        .where(models.Post.user_id == user.id)
         .where(models.Post.title.contains(search))
-    ).all()
-    return posts
+        .group_by(models.Post.id)
+        .limit(limit)
+        .offset(skip)
+    )
+
+    result = session.exec(stmt).all()
+    return result
 
 
-@router.get("/{id}", response_model=schemas.PostResponse)
+@router.get("/{id}", response_model=schemas.PostWithVotesResponse)
 def get_post(
     id: int, session: SessionDep, user: models.User = Depends(oauth2.get_current_user)
 ):
     # cursor.execute("""SELECT * FROM posts WHERE id = %s""", (str(id),))
     # post = cursor.fetchone()
-    post = session.get(models.Post, id)
-    if not post:
+    stmt = (
+        select(models.Post, func.count(models.Vote.user_id).label("votes"))
+        .join(models.Vote, models.Vote.post_id == models.Post.id, isouter=True)
+        .where(models.Post.id == id)
+        .where(models.Post.user_id == user.id)
+        .group_by(models.Post.id)
+    )
+
+    result = session.exec(stmt).first()
+    if not result:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"post with id: {id} not found",
         )
         # response.status_code = status.HTTP_404_NOT_FOUND
-    return post
+    return result
 
 
 @router.post(
