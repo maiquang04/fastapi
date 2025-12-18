@@ -1,0 +1,14 @@
+ [Unit]
+Description=demo fastapi application
+After=network.target
+
+[Service]
+User=quang
+Group=quang
+WorkingDirectory=/home/quang/app/src/
+Environment="PATH=/home/quang/app/venv/bin"
+EnvironmentFile=/home/quang/.env
+ExecStart=/home/quang/app/venv/bin/gunicorn -w 2 -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:8000
+
+[Install]
+WantedBy=multi-user.target
