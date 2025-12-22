@@ -30,10 +30,15 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     return encoded_jwt
 
 
+def decode_token(token: str):
+    payload = jwt.decode(jwt=token, key=SECRET_KEY, algorithms=[ALGORITHM])
+    id: str = payload.get("user_id")
+    return id
+
+
 def verify_access_token(token: str, credentials_exception):
     try:
-        payload = jwt.decode(jwt=token, key=SECRET_KEY, algorithms=[ALGORITHM])
-        id: str = payload.get("user_id")
+        id = decode_token(token)
         if not id:
             raise credentials_exception
 
