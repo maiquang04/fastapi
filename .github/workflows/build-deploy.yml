@@ -63,6 +63,8 @@ jobs:
                   tags: ${{ secrets.DOCKER_HUB_USERNAME }}/fastapi:latest
 
     deploy:
+        environment:
+            name: testing
         runs-on: ubuntu-latest
         needs: [build]
         steps:
