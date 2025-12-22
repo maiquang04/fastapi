@@ -7,7 +7,7 @@ from ..oauth2 import decode_token
 
 def test_root(client: TestClient):
     res = client.get("/")
-    assert res.json().get("message") == "Hello World!"
+    assert res.json().get("message") == "Hello World! V2"
     assert res.status_code == 200
 
 
