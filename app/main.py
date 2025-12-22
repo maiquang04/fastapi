@@ -4,7 +4,7 @@ from .routers import post, user, auth, vote
 from .config import settings
 from . import models
 
-create_db_and_tables()
+# create_db_and_tables()
 
 app = FastAPI()
 
