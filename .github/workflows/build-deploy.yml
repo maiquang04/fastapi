@@ -4,6 +4,35 @@ on: [push, pull_request]
 
 jobs:
     job1:
+        environment:
+            name: testing
+        env:
+            DATABASE_HOSTNAME: ${{secrets.DATABASE_HOSTNAME}}
+            DATABASE_PORT: ${{secrets.DATABASE_PORT}}
+            DATABASE_USERNAME: ${{secrets.DATABASE_USERNAME}}
+            DATABASE_PASSWORD: ${{secrets.DATABASE_PASSWORD}}
+            DATABASE_NAME: ${{secrets.DATABASE_NAME}}
+            SECRET_KEY: ${{secrets.SECRET_KEY}}
+            ALGORITHM: ${{secrets.ALGORITHM}}
+            ACCESS_TOKEN_EXPIRE_MINUTES: ${{secrets.ACCESS_TOKEN_EXPIRE_MINUTES}}
+        # Service containers to run with `container-job`
+        services:
+            # Label used to access the service container
+            postgres:
+                # Docker Hub image
+                image: postgres
+                # Provide the password for postgres
+                env:
+                    POSTGRES_PASSWORD: ${{secrets.DATABASE_PASSWORD}}
+                    POSTGRES_DB: ${{secrets.DATABASE_NAME}}_test
+                # Set health checks to wait until postgres has started
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+                ports:
+                    - 5432:5432
         runs-on: ubuntu-latest
         steps:
             - name: Pulling git repo
